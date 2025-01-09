@@ -89,11 +89,11 @@ def index():
             }
 
             #player1 {
-                padding-bottom: 30vh;
+                padding-bottom: 2vh;
             }
 
             #player2 {
-                padding-top: 30vh;
+                padding-top: 2vh;
             }
 
             .rectangle:hover {
@@ -122,6 +122,26 @@ def index():
             .square img.selected {
                 border: 4px solid #FF4742; /* Red for selected dice */
             }
+
+            .player-pile1 {
+    position: relative; /* Allows stacking tiles within the pile */
+    width: 3vw;
+    height: 6vw;
+    margin-bottom: 20vh;
+    margin-left: calc(22.5vw + 75px);
+    border: 2px dashed #aaa; /* Optional: Visual cue for the pile area */
+    
+}
+.player-pile2 {
+    position: relative; /* Allows stacking tiles within the pile */
+    width: 3vw;
+    height: 6vw;
+    margin-top: 20vh;
+    margin-left: calc(22.5vw + 75px);
+    border: 2px dashed #aaa; /* Optional: Visual cue for the pile area */
+   
+}
+
         </style>
        <script>
     let currentPlayer = "Player 1";
@@ -162,21 +182,43 @@ def index():
         actionButton.textContent = "Lock Selected Dice";
     }
 
-   function highlightTile(score) {
+  function highlightTile(score) {
+    // Get all tiles
     const tiles = document.querySelectorAll('.rectangle');
 
     // Reset all tiles to remove previous highlights
     tiles.forEach(tile => tile.style.outline = "");
 
-    // Determine the tile to highlight based on the score
-    const tileIndex = score - 21; // Subtract 21 to get the 0-based index
-    if (tileIndex >= 0 && tileIndex < tiles.length) {
-        tiles[tileIndex].style.outline = "3px solid #FF4742"; // Add red highlight
+    // Iterate over each pile
+    const piles = [document.getElementById("player1-pile"), document.getElementById("player2-pile")];
+
+    piles.forEach(pile => {
+        // Get the topmost tile in the pile (last child)
+        const topTile = pile.lastElementChild;
+
+        if (topTile && topTile.getAttribute('data-score') == score) {
+            topTile.style.outline = "4px solid #FF4742"; // Highlight top tile if it matches the score
+        }
+    });
+
+    // Highlight tiles outside the piles
+    const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
+    const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == score);
+    if (targetTile) {
+        targetTile.style.outline = "4px solid #FF4742"; // Highlight main tile if it matches the score
     }
 }
 
+
+
 function lockSelectedDice() {
     const selectedDice = document.querySelectorAll('.square img.selected');
+   
+     if (selectedDice.length === 0) {
+        alert("You must select at least one die to lock.");
+        return; // Exit the function if no dice are selected
+    }
+
     selectedDice.forEach(dice => {
         dice.classList.add("locked");
         dice.classList.remove("selected");
@@ -196,6 +238,7 @@ function lockSelectedDice() {
     const actionButton = document.getElementById("action-button");
     currentButtonState = "roll";
     actionButton.textContent = "Roll the Dice";
+    
 }
 
 
@@ -237,21 +280,30 @@ function lockSelectedDice() {
 
 
     function endTurn() {
-    // Alert the player about the end of their turn
-    alert(`${currentPlayer} ends their turn with a score of ${score}`);
-    
-    // Check for tiles matching the player's score
-    const tiles = document.querySelectorAll('.rectangle');
-    tiles.forEach(tile => {
-        const tileNumber = parseInt(tile.style.backgroundImage.match(/tile(\d+)\.png/)[1]); // Extract the tile number
-        if ((tileNumber + 20) === score) {
-            tile.style.visibility = "hidden"; // Hide the tile if it matches the score
-        }
-    });
+    // Check for highlighted tiles
+    const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(tile => tile.style.outline);
+
+    // If no tile is highlighted, exit the function
+    if (!highlightedTile) {
+        alert("No highlighted tile to claim!");
+        return;
+    }
+
+    // Hide the highlighted tile in the main area
+    highlightedTile.style.visibility = "hidden";
+
+    // Clone the tile and add it to the player's pile
+    const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
+    const newTile = highlightedTile.cloneNode(true);
+    newTile.style.visibility = "visible"; // Ensure the cloned tile is visible
+    newTile.style.position = "absolute"; // Stack tiles on top of each other
+    playerPile.appendChild(newTile);
 
     // Reset for the next turn
     updateTurn();
 }
+
+
 
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -279,11 +331,15 @@ function lockSelectedDice() {
         <div class="vertical-line"></div>
         <div class="players">
             <div class="playername" id="player1">Player 1</div>
+              <div id="player1-pile" class="player-pile1"></div>
             <div class="container">
                 {% for i in range(1, 17) %}
-                    <div class="rectangle" style="background-image: url('/static/tile{{ i }}.png');"></div>
+                    <div class="rectangle" data-id="{{ i }}" data-score="{{ 20 + i }}" 
+     style="background-image: url('/static/tile{{ i }}.png');"></div>
+
                 {% endfor %}
             </div>
+            <div id="player2-pile" class="player-pile2"></div>
             <div class="playername" id="player2">Player 2</div>
         </div>
     </body>
