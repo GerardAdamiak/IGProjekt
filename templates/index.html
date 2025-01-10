@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Turn-Based Dice Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+    <div class="dices">
+        <div id="current-turn" style="font-size: 20px; margin-bottom: 10px;">Current Turn: Player 1</div>
+        <button id="action-button" class="button-24" role="button" onclick="toggleAction()">Roll the Dice</button>
+        <button class="button-24" role="button" onclick="endTurn()">End Turn</button>
+        <div id="score-display" style="margin-top: 20px; font-size: 20px; font-weight: bold;">Score: 0</div>
+        <div class="grid">
+            {% for _ in range(8) %}
+                <div class="square">
+                    <img src="/static/dice1.png" alt="dice">
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="vertical-line"></div>
+    <div class="players">
+        <div class="playername" id="player1">Player 1</div>
+        <div id="player1-pile" class="player-pile1"></div>
+        <div class="container">
+            {% for i in range(1, 17) %}
+                <div class="rectangle" data-id="{{ i }}" data-score="{{ 20 + i }}" 
+                     style="background-image: url('/static/tile{{ i }}.png');"></div>
+            {% endfor %}
+        </div>
+        <div id="player2-pile" class="player-pile2"></div>
+        <div class="playername" id="player2">Player 2</div>
+    </div>
+</body>
+</html>

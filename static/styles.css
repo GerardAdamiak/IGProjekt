@@ -1,0 +1,123 @@
+body {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    padding-left: 25vw;
+}
+
+.vertical-line {
+    width: 5px;
+    height: 100%;
+    background-color: black;
+    margin-right: 3vw;
+}
+
+.container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    max-width: 1000px;
+}
+
+.rectangle {
+    width: 3vw;
+    height: 6vw;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.dices {
+    display: flex;
+    flex-direction: column;
+    margin-right: 10vw;
+    margin-left: -15vw;
+    align-items: center;
+}
+
+.players {
+    display: flex;
+    flex-direction: column;
+}
+
+.button-24 {
+    background: #FF4742;
+    border: 1px solid #FF4742;
+    border-radius: 6px;
+    color: #FFFFFF;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 12px 14px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.button-24:hover {
+    background-color: initial;
+    color: #FF4742;
+}
+
+.playername {
+    font-size: 40px;
+    font-weight: 800;
+    text-align: center;
+}
+
+#player1 {
+    padding-bottom: 2vh;
+}
+
+#player2 {
+    padding-top: 2vh;
+}
+
+.rectangle:hover {
+    transform: scale(1.1);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 50px);
+    grid-gap: 15px;
+    margin-top: 20px;
+}
+
+.square img {
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border: 3px solid transparent;
+}
+
+.square img.locked {
+    border: 4px solid #008000; /* Green for locked dice */
+    cursor: not-allowed;
+}
+
+.square img.selected {
+    border: 4px solid #FF4742; /* Red for selected dice */
+}
+
+.player-pile1 {
+position: relative; /* Allows stacking tiles within the pile */
+width: 3vw;
+height: 6vw;
+margin-bottom: 20vh;
+margin-left: calc(22.5vw + 75px);
+border: 2px dashed #aaa; /* Optional: Visual cue for the pile area */
+
+}
+.player-pile2 {
+position: relative; /* Allows stacking tiles within the pile */
+width: 3vw;
+height: 6vw;
+margin-top: 20vh;
+margin-left: calc(22.5vw + 75px);
+border: 2px dashed #aaa; /* Optional: Visual cue for the pile area */
+
+}
+
