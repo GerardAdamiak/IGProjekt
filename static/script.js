@@ -38,6 +38,7 @@ async function generateNumbers() {
 
 function highlightTile(score) {
 // Get all tiles
+if(score>36)score = 36;
 const tiles = document.querySelectorAll('.rectangle');
 
 // Reset all tiles to remove previous highlights
@@ -141,6 +142,18 @@ const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find
 // If no tile is highlighted, exit the function
 if (!highlightedTile) {
     alert("No highlighted tile to claim!");
+    const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
+    const topTile = playerPile.lastElementChild;
+    
+    const tiles = document.querySelectorAll('.rectangle');
+    // Highlight tiles outside the piles
+    const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
+    const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == topTile.getAttribute('data-score'));
+    playerPile.removeChild(topTile);
+    targetTile.style.visibility = "visible"; // Highlight main tile if it matches the score
+    
+
+    updateTurn();
     return;
 }
 
