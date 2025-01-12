@@ -24,17 +24,44 @@ async function generateNumbers() {
     const data = await response.json();
 
     const squares = document.querySelectorAll('.square img');
-    data.numbers.forEach((num, index) => {
-        if (!lockedDice.includes(index)) {
-            squares[index].src = `/static/dice${num}.png`;
+    const lockedDiceNumbers = [];
+    const unlockedDiceNumbers = [];
+
+    // Separate locked and unlocked dice numbers
+    squares.forEach((dice, index) => {
+        const diceValue = parseInt(dice.src.match(/dice(\d)\.png/)[1]); // Extract dice value
+        if (lockedDice.includes(index)) {
+            lockedDiceNumbers.push(diceValue);
+        } else {
+            unlockedDiceNumbers.push(data.numbers[index]); // Use generated numbers for unlocked dice
+            dice.src = `/static/dice${data.numbers[index]}.png`; // Update the image
         }
     });
+
+    // Check if there is any number in unlocked dice that doesn't appear in locked dice
+    const uniqueUnlocked = unlockedDiceNumbers.some(num => !lockedDiceNumbers.includes(num));
+
+    if (!uniqueUnlocked) {
+        const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
+        const topTile = playerPile.lastElementChild;
+        if(topTile){
+        const tiles = document.querySelectorAll('.rectangle');
+        // Highlight tiles outside the piles
+        const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
+        const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == topTile.getAttribute('data-score'));
+        playerPile.removeChild(topTile);
+        targetTile.style.visibility = "visible"; // Highlight main tile if it matches the score
+        }
+    
+        updateTurn();
+    } 
 
     // Switch button to "Lock Selected Dice" after rolling
     const actionButton = document.getElementById("action-button");
     currentButtonState = "lock";
     actionButton.textContent = "Lock Selected Dice";
 }
+
 
 function highlightTile(score) {
 // Get all tiles

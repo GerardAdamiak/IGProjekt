@@ -8,7 +8,7 @@ game_state = {
     "current_player": "Player 1",
     "player1_score": 0,
     "player2_score": 0,
-    "locked_dice": [],
+   
 }
 
 @app.route("/", methods=["GET", "POST"])
