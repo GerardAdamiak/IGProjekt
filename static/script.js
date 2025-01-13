@@ -54,7 +54,8 @@ async function generateNumbers() {
         }
     
         updateTurn();
-    } 
+        return;
+    }   
 
     // Switch button to "Lock Selected Dice" after rolling
     const actionButton = document.getElementById("action-button");
@@ -64,32 +65,31 @@ async function generateNumbers() {
 
 
 function highlightTile(score) {
-// Get all tiles
-if(score>36)score = 36;
-const tiles = document.querySelectorAll('.rectangle');
+    if (score > 36) score = 36;
 
-// Reset all tiles to remove previous highlights
-tiles.forEach(tile => tile.style.outline = "");
+    // Get all tiles
+    const tiles = document.querySelectorAll('.rectangle');
 
-// Iterate over each pile
-const piles = [document.getElementById("player1-pile"), document.getElementById("player2-pile")];
+    // Reset all tiles to remove previous highlights
+    tiles.forEach(tile => tile.style.outline = "");
 
-piles.forEach(pile => {
-    // Get the topmost tile in the pile (last child)
+    // Highlight the top tile in the opponent's pile if it matches the score
+    const pile = document.getElementById(currentPlayer === "Player 1" ? "player2-pile" : "player1-pile");
     const topTile = pile.lastElementChild;
 
     if (topTile && topTile.getAttribute('data-score') == score) {
         topTile.style.outline = "4px solid #FF4742"; // Highlight top tile if it matches the score
     }
-});
 
-// Highlight tiles outside the piles
-const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
-const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == score);
-if (targetTile) {
-    targetTile.style.outline = "4px solid #FF4742"; // Highlight main tile if it matches the score
+    // Highlight tiles outside the piles
+    const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
+    const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == score);
+
+    if (targetTile) {
+        targetTile.style.outline = "4px solid #FF4742"; // Highlight main tile if it matches the score
+    }
 }
-}
+
 
 
 
@@ -163,39 +163,111 @@ allDice.forEach(otherDice => {
 
 
 function endTurn() {
-// Check for highlighted tiles
-const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(tile => tile.style.outline);
+    console.log("---- END TURN START ----");
+    console.log("Current Player:", currentPlayer);
 
-// If no tile is highlighted, exit the function
-if (!highlightedTile) {
-    alert("No highlighted tile to claim!");
+    // Check for highlighted tiles
+    const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(tile => tile.style.outline && tile.style.visibility !== "hidden");
+    console.log("Highlighted Tile Found:", highlightedTile ? highlightedTile.getAttribute('data-score') : "None");
+
+    // If no tile is highlighted, exit the function
+    if (!highlightedTile) {
+        alert("No highlighted tile to claim!");
+        const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
+        console.log("Player Pile ID (no highlighted tile):", playerPile.id);
+
+        const topTile = playerPile.lastElementChild;
+        console.log("Top Tile in Player Pile:", topTile ? topTile.getAttribute('data-score') : "None");
+
+        const tiles = document.querySelectorAll('.rectangle');
+        const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
+        console.log("Main Tiles Outside Piles:", mainTiles.map(tile => tile.getAttribute('data-score')));
+
+        const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == topTile?.getAttribute('data-score'));
+        console.log("Target Tile to Reappear:", targetTile ? targetTile.getAttribute('data-score') : "None");
+
+        if (topTile) {
+            playerPile.removeChild(topTile);
+            console.log("Removed Top Tile from Player Pile:", topTile.getAttribute('data-score'));
+        }
+
+        if (targetTile) {
+            targetTile.style.visibility = "visible";
+            console.log("Made Target Tile Visible:", targetTile.getAttribute('data-score'));
+        }
+
+        updateTurn();
+        console.log("---- END TURN END (No Highlighted Tile) ----");
+        return;
+    }
+
+    // Check if the highlighted tile matches any tile in the opponent's pile by data-score
+    const opponentPileSelector = currentPlayer === "Player 1" ? '.player-pile2 .rectangle' : '.player-pile1 .rectangle';
+    const opponentPileTiles = Array.from(document.querySelectorAll(opponentPileSelector));
+    const inOpponentPile = opponentPileTiles.some(tile => tile.getAttribute('data-score') === highlightedTile.getAttribute('data-score'));
+    console.log("Is Highlighted Tile in Opponent's Pile by Data-Score?", inOpponentPile);
+
+    // Clone the tile and add it to the current player's pile
     const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
-    const topTile = playerPile.lastElementChild;
-    
-    const tiles = document.querySelectorAll('.rectangle');
-    // Highlight tiles outside the piles
-    const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
-    const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == topTile.getAttribute('data-score'));
-    playerPile.removeChild(topTile);
-    targetTile.style.visibility = "visible"; // Highlight main tile if it matches the score
-    
+    console.log("Current Player Pile ID:", playerPile.id);
 
+    const newTile = highlightedTile.cloneNode(true);
+    newTile.style.visibility = "visible";
+    newTile.style.position = "absolute";
+    playerPile.appendChild(newTile);
+    console.log("Added New Tile to Player Pile:", newTile.getAttribute('data-score'));
+
+    // Handle tile visibility or removal
+    if (!inOpponentPile) {
+        highlightedTile.style.visibility = "hidden";
+        console.log("Set Highlighted Tile Visibility to Hidden:", highlightedTile.getAttribute('data-score'));
+    } else {
+        const opponentPile = document.getElementById(currentPlayer === "Player 1" ? "player2-pile" : "player1-pile");
+        const topTile = opponentPile.lastElementChild;
+        console.log("Top Tile in Opponent Pile (to Remove):", topTile ? topTile.getAttribute('data-score') : "None");
+
+        if (topTile && topTile.getAttribute('data-score') === highlightedTile.getAttribute('data-score')) {
+            opponentPile.removeChild(topTile);
+            console.log("Removed Top Tile from Opponent Pile:", topTile.getAttribute('data-score'));
+        }
+    }
+    updatePlayerPoints();
+
+    // Reset for the next turn
     updateTurn();
-    return;
+    console.log("---- END TURN END ----");
 }
 
-// Hide the highlighted tile in the main area
-highlightedTile.style.visibility = "hidden";
 
-// Clone the tile and add it to the player's pile
-const playerPile = document.getElementById(currentPlayer === "Player 1" ? "player1-pile" : "player2-pile");
-const newTile = highlightedTile.cloneNode(true);
-newTile.style.visibility = "visible"; // Ensure the cloned tile is visible
-newTile.style.position = "absolute"; // Stack tiles on top of each other
-playerPile.appendChild(newTile);
 
-// Reset for the next turn
-updateTurn();
+function calculatePoints(pileSelector) {
+    const pileTiles = document.querySelectorAll(`${pileSelector} .rectangle`);
+    let points = 0;
+
+    pileTiles.forEach(tile => {
+        const score = parseInt(tile.getAttribute('data-score'));
+        if (score >= 21 && score <= 24) {
+            points += 1; // Tiles 21-24 are worth 1 point
+        } else if (score >= 25 && score <= 28) {
+            points += 2; // Tiles 25-28 are worth 2 points
+        } else if (score >= 29 && score <= 32) {
+            points += 3; // Tiles 29-32 are worth 3 points
+        } else if (score >= 33 && score <= 36) {
+            points += 4; // Tiles 33-36 are worth 4 points
+        }
+    });
+
+    return points;
+}
+
+function updatePlayerPoints() {
+    // Calculate points for Player 1
+    const player1Points = calculatePoints('.player-pile1');
+    document.getElementById('player1-points').textContent = `Points: ${player1Points}`;
+
+    // Calculate points for Player 2
+    const player2Points = calculatePoints('.player-pile2');
+    document.getElementById('player2-points').textContent = `Points: ${player2Points}`;
 }
 
 
@@ -204,4 +276,7 @@ updateTurn();
 document.addEventListener("DOMContentLoaded", () => {
     const diceSquares = document.querySelectorAll('.square img');
     diceSquares.forEach(dice => dice.addEventListener("click", toggleDiceSelection));
+
+    // Initialize points
+    updatePlayerPoints();
 });

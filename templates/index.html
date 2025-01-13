@@ -21,7 +21,9 @@
     </div>
     <div class="vertical-line"></div>
     <div class="players">
-        <div class="playername" id="player1">Player 1</div>
+        <div id="player1" class="playername">
+            Player 1 <span id="player1-points">Points: 0</span>
+        </div>
         <div id="player1-pile" class="player-pile1"></div>
         <div class="container">
             {% for i in range(1, 17) %}
@@ -30,7 +32,9 @@
             {% endfor %}
         </div>
         <div id="player2-pile" class="player-pile2"></div>
-        <div class="playername" id="player2">Player 2</div>
+        <div id="player2" class="playername">
+            Player 2 <span id="player2-points">Points: 0</span>
+        </div>
     </div>
 </body>
 </html>
