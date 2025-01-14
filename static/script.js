@@ -52,7 +52,7 @@ async function generateNumbers() {
         playerPile.removeChild(topTile);
         targetTile.style.visibility = "visible"; // Highlight main tile if it matches the score
         }
-    
+        updatePlayerPoints();
         updateTurn();
         return;
     }   
@@ -195,7 +195,7 @@ function endTurn() {
             targetTile.style.visibility = "visible";
             console.log("Made Target Tile Visible:", targetTile.getAttribute('data-score'));
         }
-
+        updatePlayerPoints();
         updateTurn();
         console.log("---- END TURN END (No Highlighted Tile) ----");
         return;
