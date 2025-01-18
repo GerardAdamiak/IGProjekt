@@ -30,5 +30,7 @@ def generate_numbers():
     numbers = [random.randint(1, 6) for _ in range(8)]
     return jsonify({"numbers": numbers})
 
+
+
 if __name__ == "__main__":
     app.run(debug=True)

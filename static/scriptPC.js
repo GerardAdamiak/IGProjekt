@@ -6,45 +6,86 @@ let currentButtonState = "roll"; // Tracks the current function of the button: "
 async function computerTurn() {
     console.log("---- COMPUTER TURN START ----");
 
-    // Simulate dice roll
-    const response = await fetch('/generate-numbers');
-    const data = await response.json();
     let computerLockedDice = [];
+    let usedNumbers = new Set(); // Track numbers that have been locked
+    let computerScore = 0;
 
-    // Decide which dice to lock (simple strategy for now)
-    data.numbers.forEach((num, index) => {
-        if (Math.random() > 0.5) {
-            computerLockedDice.push(num);
+    // Simulate the initial dice roll
+    console.log("Rolling dice...");
+    await generateNumbers();
+
+    // Loop until the computer's score reaches at least 21
+    while (computerScore < 21) {
+        
+        // Calculate sums for each number (1 through 6)
+        let sums = Array(6).fill(0);
+
+        // Collect the dice from the board (both locked and unlocked)
+        const squares = document.querySelectorAll('.square img');
+        squares.forEach((dice, index) => {
+            const diceValue = parseInt(dice.src.match(/dice(\d)\.png/)[1]); // Extract dice value
+            if (!lockedDice.includes(index)) {
+                sums[diceValue - 1] += diceValue; // Only consider unlocked dice for sums
+            }
+        });
+
+        console.log("Sums for each number:", sums);
+
+        // Find the highest sum and its corresponding number, skipping already used numbers
+        let highestSum = 0;
+        let highestSumIndex = -1;
+        for (let i = 0; i < sums.length; i++) {
+            if (!usedNumbers.has(i + 1) && sums[i] > highestSum) {
+                highestSum = sums[i];
+                highestSumIndex = i + 1; // Number corresponding to the sum
+            }
         }
-    });
 
-    console.log("Computer's Locked Dice:", computerLockedDice);
+        // If no valid number is found, break out of the loop
+        if (highestSumIndex === -1) {
+            console.log("No more valid numbers to lock.");
+            break;
+        }
 
-    // Calculate the computer's score
-    const computerScore = computerLockedDice.reduce((sum, num) => sum + (num === 6 ? 5 : num), 0);
-    console.log("Computer's Score This Turn:", computerScore);
+        console.log(`Highest sum: ${highestSum}, locking number ${highestSumIndex}.`);
+        usedNumbers.add(highestSumIndex);
 
-    // Add a tile to the computer's pile based on the score
-    const tiles = document.querySelectorAll('.rectangle');
-    const mainTiles = Array.from(tiles).filter(tile => !tile.closest('.player-pile1, .player-pile2'));
-    const targetTile = mainTiles.find(tile => tile.getAttribute('data-score') == computerScore);
+        // Lock dice with the selected number
+        squares.forEach((dice, index) => {
+            const diceValue = parseInt(dice.src.match(/dice(\d)\.png/)[1]);
+            if (diceValue === highestSumIndex && !lockedDice.includes(index)) {
+                lockedDice.push(index); // Mark the dice as locked
+                computerLockedDice.push(diceValue);
+                dice.classList.add("locked"); // Add visual indicator for locked dice
+            }
+        });
 
-    if (targetTile) {
-        targetTile.style.position = "absolute";
-        targetTile.style.visibility = "hidden";
-        const computerPile = document.getElementById('player2-pile');
-        const newTile = targetTile.cloneNode(true);
-        newTile.style.visibility = "visible";
-        computerPile.appendChild(newTile);
+        console.log("Computer's Locked Dice:", computerLockedDice);
+
+        // Update the computer's score
+        computerScore = computerLockedDice.reduce((sum, num) => sum + (num === 6 ? 5 : num), 0);
+        console.log("Computer's Score So Far:", computerScore);
+        document.getElementById("score-display").textContent = `Score: ${computerScore}`;
+        highlightTile(computerScore);
+        // If the score is high enough, break the loop
+        if (computerScore >= 21) {
+            break;
+        }
+
+        // Reroll remaining dice
+        console.log("Re-rolling remaining dice...");
+        await generateNumbers();
+
+        // Add a 1-second delay for realism
+        await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-    // Update points
-    updatePlayerPoints();
-
-    // Switch back to the player
-    updateTurn();
+   
+    endTurn();
+   
     console.log("---- COMPUTER TURN END ----");
 }
+
 
 
 
