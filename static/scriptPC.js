@@ -2,6 +2,7 @@ let currentPlayer = "Player";
 let lockedDice = [];
 let score = 0;
 let currentButtonState = "roll"; // Tracks the current function of the button: "roll" or "lock"
+let ifHighlighted = false;
 
 async function computerTurn() {
     console.log("---- COMPUTER TURN START ----");
@@ -12,10 +13,16 @@ async function computerTurn() {
 
     // Simulate the initial dice roll
     console.log("Rolling dice...");
-    await generateNumbers();
+    let rollSuccess = await generateNumbers();
+
+
+    if (!rollSuccess) {
+        endTurn();
+        return;
+    }
 
     // Loop until the computer's score reaches at least 21
-    while (computerScore < 21) {
+    while (ifHighlighted == false) {
         
         // Calculate sums for each number (1 through 6)
         let sums = Array(6).fill(0);
@@ -68,13 +75,21 @@ async function computerTurn() {
         document.getElementById("score-display").textContent = `Score: ${computerScore}`;
         highlightTile(computerScore);
         // If the score is high enough, break the loop
-        if (computerScore >= 21) {
-            break;
-        }
+        const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(tile => tile.style.outline && tile.style.visibility !== "hidden");
+if (highlightedTile) {
+    console.log("Highlighted tile found!");
+    break;
+}
+
 
         // Reroll remaining dice
         console.log("Re-rolling remaining dice...");
-        await generateNumbers();
+        rollSuccess = await generateNumbers();
+
+        if (!rollSuccess) {
+            
+            return;
+        }
 
         // Add a 1-second delay for realism
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -140,6 +155,7 @@ async function generateNumbers() {
     const uniqueUnlocked = unlockedDiceNumbers.some(num => !lockedDiceNumbers.includes(num));
 
     if (!uniqueUnlocked) {
+        alert("dupacyce");
         const playerPile = document.getElementById(currentPlayer === "Player" ? "player1-pile" : "player2-pile");
         const topTile = playerPile.lastElementChild;
         if(topTile){
@@ -150,15 +166,18 @@ async function generateNumbers() {
         playerPile.removeChild(topTile);
         targetTile.style.visibility = "visible"; // Highlight main tile if it matches the score
         }
+       
         updatePlayerPoints();
         updateTurn();
-        return;
+       
+        return false;
     }   
 
     // Switch button to "Lock Selected Dice" after rolling
     const actionButton = document.getElementById("action-button");
     currentButtonState = "lock";
     actionButton.textContent = "Lock Selected Dice";
+    return true;
 }
 
 
