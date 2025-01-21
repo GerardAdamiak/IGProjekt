@@ -16,14 +16,8 @@ async function computerTurn() {
     let rollSuccess = await generateNumbers();
 
 
-    if (!rollSuccess) {
-        endTurn();
-        return;
-    }
-
-    // Loop until the computer's score reaches at least 21
-    while (ifHighlighted == false) {
-        
+    // Main loop
+    while (true) {
         // Calculate sums for each number (1 through 6)
         let sums = Array(6).fill(0);
 
@@ -32,62 +26,84 @@ async function computerTurn() {
         squares.forEach((dice, index) => {
             const diceValue = parseInt(dice.src.match(/dice(\d)\.png/)[1]); // Extract dice value
             if (!lockedDice.includes(index)) {
-                sums[diceValue - 1] += diceValue; // Only consider unlocked dice for sums
+                if(diceValue == 6) sums[diceValue - 1] += 5;
+                else sums[diceValue - 1] += diceValue; // Only consider unlocked dice for sums
             }
         });
 
         console.log("Sums for each number:", sums);
 
-        // Find the highest sum and its corresponding number, skipping already used numbers
-        let highestSum = 0;
-        let highestSumIndex = -1;
+        // Determine the best dice to lock based on the updated strategy
+        let bestSumIndex = -1;
+        let bestSumScore = 0;
+        let highlightedTileFound = false;
+
         for (let i = 0; i < sums.length; i++) {
-            if (!usedNumbers.has(i + 1) && sums[i] > highestSum) {
-                highestSum = sums[i];
-                highestSumIndex = i + 1; // Number corresponding to the sum
+            if (!usedNumbers.has(i + 1) && sums[i] > 0) {
+                // Calculate the potential score
+                const potentialScore = computerScore + sums[i];
+
+                // Check if this score results in a highlighted tile
+                highlightTile(potentialScore);
+                const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(
+                    tile => tile.style.outline && tile.style.visibility !== "hidden"
+                );
+
+                if (highlightedTile) {
+                    highlightedTileFound = true;
+                    if (potentialScore >= bestSumScore) {
+                        bestSumIndex = i;
+                        bestSumScore = potentialScore;
+                    }
+                } else if (!highlightedTileFound && sums[i] >= bestSumScore) {
+                    // If no highlighted tile is found, fall back to the highest sum
+                    bestSumIndex = i;
+                    bestSumScore = sums[i];
+                }
             }
         }
 
-        // If no valid number is found, break out of the loop
-        if (highestSumIndex === -1) {
+        // If no valid sum is found, break the loop
+        if (bestSumIndex === -1) {
             console.log("No more valid numbers to lock.");
             break;
         }
 
-        console.log(`Highest sum: ${highestSum}, locking number ${highestSumIndex}.`);
-        usedNumbers.add(highestSumIndex);
+        console.log(`Selected sum: ${sums[bestSumIndex]}, locking number ${bestSumIndex + 1}.`);
+        usedNumbers.add(bestSumIndex + 1);
 
         // Lock dice with the selected number
         squares.forEach((dice, index) => {
             const diceValue = parseInt(dice.src.match(/dice(\d)\.png/)[1]);
-            if (diceValue === highestSumIndex && !lockedDice.includes(index)) {
+            if (diceValue === bestSumIndex + 1 && !lockedDice.includes(index)) {
                 lockedDice.push(index); // Mark the dice as locked
                 computerLockedDice.push(diceValue);
                 dice.classList.add("locked"); // Add visual indicator for locked dice
             }
         });
 
-        console.log("Computer's Locked Dice:", computerLockedDice);
-
         // Update the computer's score
         computerScore = computerLockedDice.reduce((sum, num) => sum + (num === 6 ? 5 : num), 0);
         console.log("Computer's Score So Far:", computerScore);
         document.getElementById("score-display").textContent = `Score: ${computerScore}`;
-        highlightTile(computerScore);
-        // If the score is high enough, break the loop
-        const highlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(tile => tile.style.outline && tile.style.visibility !== "hidden");
-if (highlightedTile) {
-    console.log("Highlighted tile found!");
-    break;
-}
 
+        // Check again for a highlighted tile
+        highlightTile(computerScore);
+        const finalHighlightedTile = Array.from(document.querySelectorAll('.rectangle')).find(
+            tile => tile.style.outline && tile.style.visibility !== "hidden"
+        );
+
+        if (finalHighlightedTile) {
+            console.log("Highlighted tile found!");
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            break;
+        }
 
         // Reroll remaining dice
         console.log("Re-rolling remaining dice...");
         rollSuccess = await generateNumbers();
 
         if (!rollSuccess) {
-            
             return;
         }
 
@@ -95,15 +111,9 @@ if (highlightedTile) {
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
-   
     endTurn();
-   
     console.log("---- COMPUTER TURN END ----");
 }
-
-
-
-
 
 
 function updateTurn() {
@@ -155,7 +165,7 @@ async function generateNumbers() {
     const uniqueUnlocked = unlockedDiceNumbers.some(num => !lockedDiceNumbers.includes(num));
 
     if (!uniqueUnlocked) {
-        alert("dupacyce");
+
         const playerPile = document.getElementById(currentPlayer === "Player" ? "player1-pile" : "player2-pile");
         const topTile = playerPile.lastElementChild;
         if(topTile){

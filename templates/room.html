@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Player vs Player Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        async function createRoom() {
+            const response = await fetch("/create-room", { method: "POST" });
+            const data = await response.json();
+            if (data.room_code) {
+                // Redirect to player-vs-player-online with room code and player assignment
+                window.location.href = `/player-vs-player-online?room_code=${data.room_code}&player=${data.player}`;
+            }
+        }
+
+        async function joinRoom() {
+            const roomCode = document.getElementById("room-input").value;
+            const response = await fetch("/join-room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ room_code: roomCode })
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Redirect to player-vs-player-online with room code and player assignment
+                window.location.href = `/player-vs-player-online?room_code=${roomCode}&player=${data.player}`;
+            } else {
+                alert(data.message);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div>
+        <h1>Online Multiplayer</h1>
+        <button onclick="createRoom()">Create Room</button>
+        <p id="room-code"></p>
+        <input type="text" id="room-input" placeholder="Enter Room Code">
+        <button onclick="joinRoom()">Join Room</button>
+    </div>
+</body>
+</html>
