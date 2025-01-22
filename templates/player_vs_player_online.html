@@ -3,40 +3,25 @@
 <head>
     <title>Turn-Based Dice Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script>
-        function getQueryParam(param) {
-            const params = new URLSearchParams(window.location.search);
-            return params.get(param);
-        }
-
-        window.onload = function () {
-            const roomCode = getQueryParam("room_code");
-            const player = getQueryParam("player");
-
-            if (roomCode) {
-                document.getElementById("room-code-display").innerText = "Room Code: " + roomCode;
-            }
-            if (player) {
-                document.getElementById("player-display").innerText = "You are: " + player;
-            }
-        };
-    </script>
+    <script src="{{ url_for('static', filename='scriptOnline.js') }}" defer></script>
 </head>
 <body>
     
     <div class="dices">
         <p id="room-code-display" style="font-size: 20px; font-weight: bold;"></p>
         <p id="player-display" style="font-size: 20px; font-weight: bold;"></p>
-        <div id="current-turn" style="font-size: 20px; margin-bottom: 10px;">Current Turn: Player 1</div>
-        <button id="action-button" class="button-24" role="button" onclick="toggleAction()">Roll the Dice</button>
-        <button class="button-24" role="button" onclick="endTurn()">End Turn</button>
-        <div id="score-display" style="margin-top: 20px; font-size: 20px; font-weight: bold;">Score: 0</div>
-        <div class="grid">
-            {% for _ in range(8) %}
-                <div class="square">
-                    <img src="/static/dice1.png" alt="dice">
-                </div>
-            {% endfor %}
+        <p id="current-turn" style="font-size: 20px; margin-bottom: 10px;">Current Turn: Loading...</p>
+        <div id="game-controls" style="display: none;">
+            <button id="action-button" class="button-24" role="button" onclick="toggleAction()">Roll the Dice</button>
+            <button class="button-24" role="button" onclick="endTurn()">End Turn</button>
+            <div id="score-display" style="margin-top: 20px; font-size: 20px; font-weight: bold;">Score: 0</div>
+            <div class="grid">
+                {% for _ in range(8) %}
+                    <div class="square">
+                        <img src="/static/dice1.png" alt="dice">
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
     <div class="vertical-line"></div>

@@ -35,6 +35,22 @@ def roomset():
 def player_vs_player_online():
     return render_template("player_vs_player_online.html")  # Placeholder
 
+@app.route("/get-current-turn", methods=["POST"])
+def get_current_turn():
+    room_code = request.json.get("room_code")
+    if room_code in rooms:
+        return jsonify({"current_turn": rooms[room_code].get("current_turn", "Player 1")})
+    return jsonify({"error": "Room not found"}), 404
+
+@app.route("/end-turn", methods=["POST"])
+def end_turn():
+    room_code = request.json.get("room_code")
+    if room_code in rooms:
+        current_turn = rooms[room_code].get("current_turn", "Player 1")
+        next_turn = "Player 2" if current_turn == "Player 1" else "Player 1"
+        rooms[room_code]["current_turn"] = next_turn
+        return jsonify({"current_turn": next_turn})
+    return jsonify({"error": "Room not found"}), 404
 
 
 @app.route("/generate-numbers")
@@ -60,6 +76,34 @@ def join_room():
         else:
             return jsonify({"success": False, "message": "Room is full."})
     return jsonify({"success": False, "message": "Room not found."})
+
+
+@app.route("/get-dice-state", methods=["POST"])
+def get_dice_state():
+    room_code = request.json.get("room_code")
+    if room_code in rooms:
+        dice_state = rooms[room_code].get(
+            "dice_state",
+            {
+                "dice": [1] * 8,
+                "locked": [False] * 8,
+                "button_state": "roll",
+                "score": 0
+            },
+        )
+        return jsonify({"dice_state": dice_state})
+    return jsonify({"error": "Room not found"}), 404
+
+@app.route("/set-dice-state", methods=["POST"])
+def set_dice_state():
+    room_code = request.json.get("room_code")
+    dice_state = request.json.get("dice_state")
+    if room_code in rooms:
+        rooms[room_code]["dice_state"] = dice_state
+        return jsonify({"success": True})
+    return jsonify({"error": "Room not found"}), 404
+
+
 
 
 if __name__ == "__main__":
