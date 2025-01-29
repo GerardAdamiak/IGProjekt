@@ -6,6 +6,8 @@ app = Flask(__name__)
 
 rooms = {} 
 
+
+
 game_state = {
     "current_player": "Player 1",
     "player1_score": 0,
@@ -44,6 +46,7 @@ def get_current_turn():
 
 @app.route("/end-turn", methods=["POST"])
 def end_turn():
+    
     room_code = request.json.get("room_code")
     if room_code in rooms:
         current_turn = rooms[room_code].get("current_turn", "Player 1")
@@ -62,7 +65,17 @@ def generate_numbers():
 def create_room():
     room_code = generate_room_code()
     # Assign Player 1 as the room creator
-    rooms[room_code] = {"players": ["Player 1"]}
+    rooms[room_code] = {
+        "players": ["Player 1"],  # Player 1 is the creator of the room
+        "current_turn": "Player 1",  # Default turn starts with Player 1
+        "dice_state": {  # Initial state of the dice
+            "dice": [1] * 8,
+            "locked": [False] * 8,
+            "button_state": "roll",
+            "score": 0
+        },
+        "hidden_tiles": [] 
+    }
     return jsonify({"room_code": room_code, "player": "Player 1"})
 
 @app.route("/join-room", methods=["POST"])
@@ -104,7 +117,28 @@ def set_dice_state():
     return jsonify({"error": "Room not found"}), 404
 
 
+@app.route("/update-hidden-tiles", methods=["POST"])
+def update_hidden_tiles():
+    room_code = request.json.get("room_code")
+    score = request.json.get("score")
+    if room_code in rooms:
+        hidden_tiles = rooms[room_code].get("hidden_tiles", [])
+        if score not in hidden_tiles:
+            hidden_tiles.append(score)
+        rooms[room_code]["hidden_tiles"] = hidden_tiles
+        return jsonify({"success": True})
+    return jsonify({"error": "Room not found"}), 404
+
+
+@app.route("/get-hidden-tiles", methods=["POST"])
+def get_hidden_tiles():
+    room_code = request.json.get("room_code")
+    if room_code in rooms:
+        return jsonify({"hidden_tiles": rooms[room_code].get("hidden_tiles", [])})
+    return jsonify({"error": "Room not found"}), 404
+
+
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=12218, debug=True)

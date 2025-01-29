@@ -30,37 +30,73 @@ let currentPlayer = "Player 1";
                     gameControls.style.display = "none"; // Hide controls
                 }
             }
+            await synchronizeHiddenTiles();
         }
 
         async function endTurn() {
             const roomCode = getQueryParam("room_code");
-
+        
+            // Update the hidden tiles on the server
+            await fetch("/update-hidden-tiles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ room_code: roomCode, score: score })
+            });
+        
+            // Synchronize hidden tiles to reflect the updated state for both players
+            await synchronizeHiddenTiles();
+        
+            // Reset dice and state for the new turn
             const response = await fetch("/end-turn", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ room_code: roomCode })
             });
             const data = await response.json();
-
+        
             if (data.current_turn) {
                 document.getElementById("current-turn").innerText = "Current Turn: " + data.current_turn;
             }
-            score = 0; // Reset score for new turn
-    lockedDice = []; // Reset locked dice for new turn
-    const diceImages = document.querySelectorAll('.square img');
-    diceImages.forEach(dice => dice.classList.remove("locked", "selected"));
-    document.getElementById("score-display").textContent = "Score: 0";
-
-
+        
+            score = 0; // Reset score for the new turn
+            lockedDice = [];
+            const diceImages = document.querySelectorAll('.square img');
+            diceImages.forEach(dice => dice.classList.remove("locked", "selected"));
+            document.getElementById("score-display").textContent = "Score: 0";
+        
             const actionButton = document.getElementById("action-button");
-    currentButtonState = "roll";
-    actionButton.textContent = "Roll the Dice";
+            currentButtonState = "roll";
+            actionButton.textContent = "Roll the Dice";
         }
-
+        
+        
         // Poll the current turn every 2 seconds to keep the game state synchronized
         setInterval(fetchCurrentTurn, 100);
 
     
+        async function synchronizeHiddenTiles() {
+            const roomCode = getQueryParam("room_code");
+            const response = await fetch("/get-hidden-tiles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ room_code: roomCode })
+            });
+            const data = await response.json();
+        
+            if (data.hidden_tiles) {
+                const hiddenTiles = data.hidden_tiles;
+                const tiles = document.querySelectorAll('.rectangle');
+        
+                // Update visibility for all tiles
+                tiles.forEach(tile => {
+                    const tileScore = parseInt(tile.getAttribute('data-score'));
+                    if (hiddenTiles.includes(tileScore)) {
+                        tile.style.visibility = 'hidden';
+                    }
+                });
+            }
+        }
+        
 
 function highlightTile(score) {
     if (score > 36) score = 36;
@@ -255,6 +291,7 @@ async function restoreDiceState() {
 
         // Restore score
         score = restoredScore;
+        highlightTile(score);
         document.getElementById("score-display").textContent = `Score: ${score}`;
     }
 }
@@ -270,7 +307,7 @@ window.onload = async function () {
     if (player) {
         document.getElementById("player-display").innerText = "You are: " + player;
     }
-
+    await synchronizeHiddenTiles(); // Synchronize hidden tiles on page load
     await restoreDiceState();
     fetchCurrentTurn();
 };
@@ -284,5 +321,9 @@ document.getElementById("action-button").addEventListener("click", async () => {
         lockSelectedDice();
     }
     saveDiceState(); // Save state after each action
+    synchronizeHiddenTiles();
 });
+
+
+
        
